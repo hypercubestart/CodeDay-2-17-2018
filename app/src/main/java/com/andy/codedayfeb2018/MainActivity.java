@@ -43,7 +43,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     double roll = 0;
 
     int counter;
-    private final int waitCount = 100;
+    private final int waitCount = 20;
 
     private Type type = Type.LEFT;
 
@@ -102,12 +102,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     @Override
     public void onSensorChanged(SensorEvent sensorEvent) {
-        // If the sensor data is unreliable return
-        if (sensorEvent.accuracy == SensorManager.SENSOR_STATUS_UNRELIABLE) {
-            Log.d("Sensor", "NOT ACCURATE");
-            return;
-        }
-
         // Gets the value of the sensor that has been changed
         switch (sensorEvent.sensor.getType()) {
             case Sensor.TYPE_ACCELEROMETER:
@@ -117,31 +111,17 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                     return;
                 }
 
-                if (counter > waitCount && initialOrientation == null && gravity != null && geomag != null) {
-
-                    // checks that the rotation matrix is found
-                    boolean success = SensorManager.getRotationMatrix(inR, I, gravity, geomag);
-                    if (success) {
-                        SensorManager.getOrientation(inR, orientVals);
-                        azimuth = Math.toDegrees(orientVals[0]);
-                        pitch = Math.toDegrees(orientVals[1]);
-                        roll = Math.toDegrees(orientVals[2]);
-
-                        initialOrientation = new double[]{Math.toDegrees(orientVals[0]), Math.toDegrees(orientVals[1]), Math.toDegrees(orientVals[2]) };
-                        System.out.println(azimuth + "      " + pitch + "       " + roll);
-                    }
-                }
-
                 gravity = sensorEvent.values.clone();
                 double diff = 0;
                 for (int i = 0; i < gravity.length - 1; i++) {
                     diff += gravity[i];
                 }
                 diff = Math.sqrt(Math.abs(diff));
+                Log.d("diff", String.valueOf(diff));
                 if (diff > ACCELERATION_THRESHOLD) {
 
                     // If gravity and geomag have values then find rotation matrix
-                    if (gravity != null && geomag != null) {
+                    if (gravity != null && geomag != null && initialOrientation != null) {
 
                         // checks that the rotation matrix is found
                         boolean success = SensorManager.getRotationMatrix(inR, I, gravity, geomag);
@@ -179,25 +159,21 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 break;
         }
         // If gravity and geomag have values then find rotation matrix
-        if (counter > waitCount && initialOrientation == null && gravity != null && geomag != null) {
+        if (counter == waitCount && initialOrientation == null && gravity != null && geomag != null) {
 
             // checks that the rotation matrix is found
             boolean success = SensorManager.getRotationMatrix(inR, I, gravity, geomag);
             if (success) {
                 SensorManager.getOrientation(inR, orientVals);
-                azimuth = Math.toDegrees(orientVals[0]);
-                pitch = Math.toDegrees(orientVals[1]);
-                roll = Math.toDegrees(orientVals[2]);
 
                 initialOrientation = new double[]{Math.toDegrees(orientVals[0]), Math.toDegrees(orientVals[1]), Math.toDegrees(orientVals[2]) };
-                System.out.println(azimuth + "      " + pitch + "       " + roll);
             }
         }
     }
 
     private void rightDrumHit(double azimuth, double pitch, double roll) {
         pitch *= -1;
-        if(pitch >= 12.5 && pitch < 60) {
+        if(pitch >= 5 && pitch < 60) {
             if(azimuth >= -90 && azimuth < -30){
                 System.out.println("Crash Cymbal");
             }
@@ -208,7 +184,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 System.out.println("Ride Cymbal");
             }
         }
-        else if(pitch >= -22.5 && pitch < 12.5) {
+        else if(pitch >= -22.5 && pitch < 5) {
             if(azimuth >= -90 && azimuth <= -45){
                 System.out.println("Hi-Hat");
             }
@@ -226,7 +202,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     private void leftDrumHit(double azimuth, double pitch, double roll) {
         pitch *= -1;
-        if(pitch >= 12.5 && pitch < 60) {
+        if(pitch >= 5 && pitch < 60) {
             if(azimuth >= -60 && azimuth < 0){
                 System.out.println("Crash Cymbal");
             }
@@ -237,7 +213,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 System.out.println("Ride Cymbal");
             }
         }
-        else if(pitch >= -22.5 && pitch < 12.5) {
+        else if(pitch >= -22.5 && pitch < 5) {
             if(azimuth >= -90 && azimuth <= 0){
                 System.out.println("Hi-Hat");
             }
