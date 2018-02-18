@@ -10,22 +10,18 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ToggleButton;
 
 public class MainActivity extends AppCompatActivity implements SensorEventListener{
 
-    private final double ACCELERATION_THRESHOLD = 0.01;
-    private final double MOVEMENT_THRESHOLD = 0.01;
-    private Button calibrationButton;
-    private SensorManager mSensorManager;
-    private double totalAcceleration;
-    private Long prevTime;
+    private final static double ACCELERATION_THRESHOLD = 0.5;
 
-    private double velocityX;
-    private double velocityY;
-    private double velocityZ;
-    private double positionX;
-    private double positionY;
-    private double positionZ;
+    private Button calibrationButton;
+    private ToggleButton toggleButton;
+    private SensorManager mSensorManager;
+    private float[] prevAccelerations;
+    private float[] prevRotations;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -39,12 +35,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             public void onClick(View view) {
                 mSensorManager.unregisterListener(MainActivity.this);
 
-                velocityX = 0;
-                velocityY = 0;
-                velocityZ = 0;
-                positionX = 0;
-                positionY = 0;
-                positionZ = 0;
                 mSensorManager.registerListener(MainActivity.this,
                         mSensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION),
                         SensorManager.SENSOR_DELAY_NORMAL);
@@ -65,44 +55,27 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     @Override
     public void onSensorChanged(SensorEvent sensorEvent) {
         if (sensorEvent.sensor.getType() == Sensor.TYPE_LINEAR_ACCELERATION) {
-            float[] values = sensorEvent.values;
-
-            //whiten data
-            for (int i = 0; i < values.length; i++) {
-                if (Math.abs(values[i]) < ACCELERATION_THRESHOLD) {
-                    values[i] = 0;
-                }
-            }
-
-            totalAcceleration = Math.sqrt(Math.pow(values[0], 2) + Math.pow(values[1], 2) + Math.pow(values[2], 2));
-            System.out.println("Acceleration: " + totalAcceleration);
-
-        } else if (sensorEvent.sensor.getType() == Sensor.TYPE_GAME_ROTATION_VECTOR) {
-            if (prevTime == null) {
-                prevTime = sensorEvent.timestamp;
+            if (prevAccelerations == null) {
+                prevAccelerations = sensorEvent.values;
                 return;
             }
+
+            if (prevRotations == null) return;
+
             float[] values = sensorEvent.values;
-            // Movement
-            float x = Math.abs(values[0]) < MOVEMENT_THRESHOLD ? 0 : values[0];
-            float y = Math.abs(values[1]) < MOVEMENT_THRESHOLD ? 0 : values[1];
-            float z = Math.abs(values[2]) < MOVEMENT_THRESHOLD ? 0 : values[2];
+            double diff = 0;
+            for (int i = 0; i < values.length; i++) {
+                diff += Math.pow(values[i] - prevAccelerations[i], 2);
+            }
 
-            double deltaTime = (sensorEvent.timestamp-prevTime)/1000000000.0;
-            double accelerationX = Math.sin(Math.PI * x) * totalAcceleration;
-            double accelerationY = Math.sin(Math.PI * y) * totalAcceleration;
-            double accelerationZ = Math.sin(Math.PI * z) * totalAcceleration;
+            if (diff > ACCELERATION_THRESHOLD) {
+                //REGISTER AS HIT
+            }
 
-            velocityX += accelerationX * deltaTime;
-            velocityY += accelerationY * deltaTime;
-            velocityZ += accelerationZ * deltaTime;
-            positionX += 0.5 * accelerationX * Math.pow(deltaTime, 2) + velocityX * deltaTime;
-            positionY += 0.5 * accelerationY * Math.pow(deltaTime, 2) + velocityY * deltaTime;
-            positionZ += 0.5 * accelerationZ * Math.pow(deltaTime, 2) + velocityZ * deltaTime;
+            prevAccelerations = values;
 
-            System.out.println("X: " + positionX + " Y: " + positionY + " Z: " + positionZ);
-
-            prevTime = sensorEvent.timestamp;
+        } else if (sensorEvent.sensor.getType() == Sensor.TYPE_GAME_ROTATION_VECTOR) {
+            prevRotations = sensorEvent.values;
         }
     }
 
