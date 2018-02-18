@@ -27,6 +27,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private SensorManager mSensorManager;
     private float[] prevAccelerations;
     private float[] prevRotations;
+    private float[] initalRotations;
 
     private Type type = Type.LEFT;
 
@@ -93,46 +94,52 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             diff = Math.sqrt(Math.abs(diff));
             System.out.println(Arrays.toString(prevRotations));
             //System.out.println(diff);
+            float[] rotValues = new float[3];
+            for (int i = 0; i < rotValues.length; i++) {
+                rotValues[i] = prevRotations[i] - initalRotations[i];
+            }
+
             if (diff > ACCELERATION_THRESHOLD) {
                 //REGISTER AS HIT
                 //System.out.println(Arrays.toString(prevRotations));
                 if (type == Type.LEFT) {
                     //LEFT DRUM STICK
-                    leftDrumHit();
+                    leftDrumHit(rotValues);
                 } else {
                     //RIGHT DRUM STICK
-                    rightDrumHit();
+                    rightDrumHit(rotValues);
                 }
             }
 
             prevAccelerations = values;
 
         } else if (sensorEvent.sensor.getType() == Sensor.TYPE_GAME_ROTATION_VECTOR) {
+            if (initalRotations == null) initalRotations = sensorEvent.values.clone();
             prevRotations = sensorEvent.values;
             //System.out.println(Arrays.toString(prevRotations));
         }
     }
 
-    private void rightDrumHit() {
-        if(prevRotations[0] >= 0.125 && prevRotations[0] < 0.333) {
-            if(prevRotations[2] <= 0.5 && prevRotations[2] > 1/6){
+    private void rightDrumHit(float[] vals) {
+        if(vals[0] >= 0.125 && vals[0] < 0.333) {
+            if(vals[2] <= 0.5 && vals[2] > 1/6){
                 System.out.println("Crash Cymbal");
             }
-            else if(prevRotations[2] <= 1/6 && prevRotations[2] >= 0) {
+            else if(vals[2] <= 1/6 && vals[2] >= 0) {
                 System.out.println("High-Tom");
             }
-            else if(prevRotations[2] < 0 && prevRotations[2] > -1/3) {
+            else if(vals[2] < 0 && vals[2] > -1/3) {
                 System.out.println("Ride Cymbal");
             }
         }
-        else if(prevRotations[0] >= -0.125 && prevRotations[0] < 0.125) {
-            if(prevRotations[2] <= 0.5 && prevRotations[2] >= 0.25){
+        else if(vals[0] >= -0.125 && vals[0] < 0.125) {
+            if(vals[2] <= 0.5 && vals[2] >= 0.25){
                 System.out.println("Hi-Hat");
             }
-            else if(prevRotations[2] < 0.25 && prevRotations[2] >= 0) {
+            else if(vals[2] < 0.25 && vals[2] >= 0) {
                 System.out.println("Snare");
             }
-            else if(prevRotations[2] < 0 && prevRotations[2] > -0.5) {
+            else if(vals[2] < 0 && vals[2] > -0.5) {
                 System.out.println("Low-Tom");
             }
         }
@@ -141,26 +148,26 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         }
     }
 
-    private void leftDrumHit() {
-        if(prevRotations[0] >= 0.125 && prevRotations[0] < 0.333) {
-            if(prevRotations[2] <= 1/3 && prevRotations[2] > 1/8){
+    private void leftDrumHit(float[] vals) {
+        if(vals[0] >= 0.125 && vals[0] < 0.333) {
+            if(vals[2] <= 1/3 && vals[2] > 1/8){
                 System.out.println("Crash Cymbal");
             }
-            else if(prevRotations[2] <= 1/8 && prevRotations[2] >= -0.25) {
+            else if(vals[2] <= 1/8 && vals[2] >= -0.25) {
                 System.out.println("High-Tom");
             }
-            else if(prevRotations[2] < -0.25 && prevRotations[2] > -0.5) {
+            else if(vals[2] < -0.25 && vals[2] > -0.5) {
                 System.out.println("Ride Cymbal");
             }
         }
-        else if(prevRotations[0] >= -0.125 && prevRotations[0] < 0.125) {
-            if(prevRotations[2] <= 0.5 && prevRotations[2] >= 0){
+        else if(vals[0] >= -0.125 && vals[0] < 0.125) {
+            if(vals[2] <= 0.5 && vals[2] >= 0){
                 System.out.println("Hi-Hat");
             }
-            else if(prevRotations[2] < 0 && prevRotations[2] >= -1/3) {
+            else if(vals[2] < 0 && vals[2] >= -1/3) {
                 System.out.println("Snare");
             }
-            else if(prevRotations[2] < -1/3 && prevRotations[2] > -2/3) {
+            else if(vals[2] < -1/3 && vals[2] > -2/3) {
                 System.out.println("Low-Tom");
             }
         }
