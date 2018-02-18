@@ -230,4 +230,29 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         super.onStop();
         mSensorManager.unregisterListener(this);
     }
+
+    private void playCrashCymbal() {
+
+    }
+
+    private void playHighTom() {
+
+    }
+
+    private void playRideCymbal() {
+
+    }
+
+    private void playHiHat() {
+
+
+    }
+
+    private void playLowTom() {
+
+    }
+
+    private void playSnare() {
+
+    }
 }
