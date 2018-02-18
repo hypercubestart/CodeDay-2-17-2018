@@ -36,6 +36,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     float[] geomag = new float[3];
     float[] orientVals = new float[3];
 
+    double[] initialOrientation;
     double azimuth = 0;
     double pitch = 0;
     double roll = 0;
@@ -72,6 +73,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             public void onClick(View view) {
                 mSensorManager.unregisterListener(MainActivity.this);
 
+                gravity = null;
+                geomag = null;
+                initialOrientation = null;
                 mSensorManager.registerListener(MainActivity.this, mAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
                 mSensorManager.registerListener(MainActivity.this, mMagnetometer, SensorManager.SENSOR_DELAY_NORMAL);
             }
@@ -102,6 +106,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 }
                 diff = Math.sqrt(Math.abs(diff));
                 if (diff > ACCELERATION_THRESHOLD) {
+
                     // If gravity and geomag have values then find rotation matrix
                     if (gravity != null && geomag != null) {
 
@@ -112,16 +117,16 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                             azimuth = Math.toDegrees(orientVals[0]);
                             pitch = Math.toDegrees(orientVals[1]);
                             roll = Math.toDegrees(orientVals[2]);
+
+                            if (type == Type.LEFT) {
+                                //LEFT DRUM STICK
+                                leftDrumHit(azimuth - initialOrientation[0], pitch- initialOrientation[1], roll - initialOrientation[2]);
+                            } else {
+                                //RIGHT DRUM STICK
+                                rightDrumHit(azimuth - initialOrientation[0], pitch- initialOrientation[1], roll - initialOrientation[2]);
+                            }
                             //System.out.println(azimuth + "      " + pitch + "       " + roll);
                         }
-                    }
-                    //REGISTER AS HIT
-                    if (type == Type.LEFT) {
-                        //LEFT DRUM STICK
-                        leftDrumHit(azimuth, pitch, roll);
-                    } else {
-                        //RIGHT DRUM STICK
-                        rightDrumHit(azimuth, pitch, roll);
                     }
                 }
                 break;
@@ -129,10 +134,25 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 geomag = sensorEvent.values.clone();
                 break;
         }
+        // If gravity and geomag have values then find rotation matrix
+        if (/*initialOrientation == null && */gravity != null && geomag != null) {
+
+            // checks that the rotation matrix is found
+            boolean success = SensorManager.getRotationMatrix(inR, I, gravity, geomag);
+            if (success) {
+                SensorManager.getOrientation(inR, orientVals);
+                azimuth = Math.toDegrees(orientVals[0]);
+                pitch = Math.toDegrees(orientVals[1]);
+                roll = Math.toDegrees(orientVals[2]);
+
+                //initialOrientation = new double[]{Math.toDegrees(orientVals[0]), Math.toDegrees(orientVals[1]), Math.toDegrees(orientVals[2]) };
+                System.out.println(azimuth + "      " + pitch + "       " + roll);
+            }
+        }
     }
 
     private void rightDrumHit(double azimuth, double pitch, double roll) {
-        if(vals[0] >= 0.125 && vals[0] < 0.333) {
+       /* if(vals[0] >= 0.125 && vals[0] < 0.333) {
             if(vals[2] <= 0.5 && vals[2] > 1/6){
                 System.out.println("Crash Cymbal");
             }
@@ -156,11 +176,11 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         }
         else {
             System.out.println("Missed the drumset");
-        }
+        }*/
     }
 
     private void leftDrumHit(double azimuth, double pitch, double roll) {
-        if(vals[0] >= 0.125 && vals[0] < 0.333) {
+      /*  if(vals[0] >= 0.125 && vals[0] < 0.333) {
             if(vals[2] <= 1/3 && vals[2] > 1/8){
                 System.out.println("Crash Cymbal");
             }
@@ -184,7 +204,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         }
         else {
             System.out.println("Missed the drumset");
-        }
+        }*/
     }
 
     @Override
