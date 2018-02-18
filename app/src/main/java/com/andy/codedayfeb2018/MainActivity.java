@@ -13,6 +13,8 @@ import android.widget.Button;
 
 public class MainActivity extends AppCompatActivity implements SensorEventListener{
 
+    private final double ACCELERATION_THRESHOLD = 0.01;
+    private final double MOVEMENT_THRESHOLD = 0.01;
     private Button calibrationButton;
     private SensorManager mSensorManager;
     private double totalAcceleration;
@@ -64,12 +66,15 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     public void onSensorChanged(SensorEvent sensorEvent) {
         if (sensorEvent.sensor.getType() == Sensor.TYPE_LINEAR_ACCELERATION) {
             float[] values = sensorEvent.values;
-            // Movement
-            float x = values[0];
-            float y = values[1];
-            float z = values[2];
 
-            totalAcceleration = Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2) + Math.pow(z, 2));
+            //whiten data
+            for (int i = 0; i < values.length; i++) {
+                if (Math.abs(values[i]) < ACCELERATION_THRESHOLD) {
+                    values[i] = 0;
+                }
+            }
+
+            totalAcceleration = Math.sqrt(Math.pow(values[0], 2) + Math.pow(values[1], 2) + Math.pow(values[2], 2));
             System.out.println("Acceleration: " + totalAcceleration);
 
         } else if (sensorEvent.sensor.getType() == Sensor.TYPE_GAME_ROTATION_VECTOR) {
@@ -79,9 +84,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             }
             float[] values = sensorEvent.values;
             // Movement
-            float x = values[0];
-            float y = values[1];
-            float z = values[2];
+            float x = Math.abs(values[0]) < MOVEMENT_THRESHOLD ? 0 : values[0];
+            float y = Math.abs(values[1]) < MOVEMENT_THRESHOLD ? 0 : values[1];
+            float z = Math.abs(values[2]) < MOVEMENT_THRESHOLD ? 0 : values[2];
 
             double deltaTime = (sensorEvent.timestamp-prevTime)/1000000000.0;
             double accelerationX = Math.sin(Math.PI * x) * totalAcceleration;
