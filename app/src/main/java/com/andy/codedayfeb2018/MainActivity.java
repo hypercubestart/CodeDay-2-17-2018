@@ -21,7 +21,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         LEFT, RIGHT
     }
 
-    private final static double ACCELERATION_THRESHOLD = 2.5;
+    private final static double ACCELERATION_THRESHOLD = 5;
 
     private Button calibrationButton;
     private ToggleButton toggleButton;
@@ -118,12 +118,23 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                             pitch = Math.toDegrees(orientVals[1]);
                             roll = Math.toDegrees(orientVals[2]);
 
+                            double deltaAzimuth = azimuth - initialOrientation[0];
+                            deltaAzimuth += (deltaAzimuth>180) ? -360 : (deltaAzimuth<-180) ? 360 : 0;
+                            double deltaPitch = pitch - initialOrientation[1];
+                            deltaPitch += (deltaPitch>180) ? -360 : (deltaPitch<-180) ? 360 : 0;
+                            //deltaPitch *= -1;
+                            double deltaRoll = roll - initialOrientation[2];
+                            deltaRoll += (deltaRoll>180) ? -360 : (deltaRoll<-180) ? 360 : 0;
+
+                            System.out.println(Arrays.toString(initialOrientation));
+                            System.out.println(azimuth + " " + pitch);
+                            System.out.println(deltaAzimuth + " " + deltaPitch);
                             if (type == Type.LEFT) {
                                 //LEFT DRUM STICK
-                                leftDrumHit(azimuth - initialOrientation[0], pitch- initialOrientation[1], roll - initialOrientation[2]);
+                                leftDrumHit(deltaAzimuth, deltaPitch, deltaRoll);
                             } else {
                                 //RIGHT DRUM STICK
-                                rightDrumHit(azimuth - initialOrientation[0], pitch- initialOrientation[1], roll - initialOrientation[2]);
+                                rightDrumHit(deltaAzimuth, deltaPitch, deltaRoll);
                             }
                             //System.out.println(azimuth + "      " + pitch + "       " + roll);
                         }
@@ -152,7 +163,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     }
 
     private void rightDrumHit(double azimuth, double pitch, double roll) {
-        if(pitch >= 22.5 && pitch < 60) {
+        pitch *= -1;
+        if(pitch >= 12.5 && pitch < 60) {
             if(azimuth >= -90 && azimuth < -30){
                 System.out.println("Crash Cymbal");
             }
@@ -163,7 +175,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 System.out.println("Ride Cymbal");
             }
         }
-        else if(pitch >= -22.5 && pitch < 22.5) {
+        else if(pitch >= -22.5 && pitch < 12.5) {
             if(azimuth >= -90 && azimuth <= -45){
                 System.out.println("Hi-Hat");
             }
@@ -180,7 +192,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     }
 
     private void leftDrumHit(double azimuth, double pitch, double roll) {
-        if(pitch >= 11.25 && pitch < 60) {
+        pitch *= -1;
+        if(pitch >= 12.5 && pitch < 60) {
             if(azimuth >= -60 && azimuth < 0){
                 System.out.println("Crash Cymbal");
             }
@@ -191,7 +204,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 System.out.println("Ride Cymbal");
             }
         }
-        else if(pitch >= -11.25 && pitch < 11.25) {
+        else if(pitch >= -22.5 && pitch < 12.5) {
             if(azimuth >= -90 && azimuth <= 0){
                 System.out.println("Hi-Hat");
             }
