@@ -22,7 +22,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         LEFT, RIGHT
     }
 
-    private final static double ACCELERATION_THRESHOLD = 5;
+    private final static double ACCELERATION_THRESHOLD = 3.0;
 
     private Button calibrationButton;
     private ToggleButton toggleButton;
@@ -31,19 +31,18 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private Sensor mAccelerometer;
     private Sensor mMagnetometer;
 
-    float[] inR = new float[16];
-    float[] I = new float[16];
-    float[] gravity = new float[3];
-    float[] geomag = new float[3];
-    float[] orientVals = new float[3];
+    // Gravity rotational data
+    private float gravity[];
+    // Magnetic rotational data
+    private float magnetic[]; //for magnetic rotational data
+    private float accels[] = new float[3];
+    private float mags[] = new float[3];
+    private float[] values = new float[3];
 
-    double[] initialOrientation;
-    double azimuth = 0;
-    double pitch = 0;
-    double roll = 0;
-
-    int counter;
-    private final int waitCount = 20;
+    // azimuth, pitch and roll
+    private float azimuth;
+    private float pitch;
+    private float roll;
 
     private Type type = Type.LEFT;
 
@@ -78,16 +77,11 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 mSensorManager.unregisterListener(MainActivity.this);
 
 
-                initialOrientation = null;
                 azimuth = 0;
                 pitch = 0;
                 roll = 0;
-                counter = 0;
-                inR = new float[16];
-                I = new float[16];
                 gravity = new float[3];
-                geomag = new float[3];
-                orientVals = new float[3];
+
                 mSensorManager.registerListener(MainActivity.this, mAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
                 mSensorManager.registerListener(MainActivity.this, mMagnetometer, SensorManager.SENSOR_DELAY_NORMAL);
             }
@@ -102,72 +96,28 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     @Override
     public void onSensorChanged(SensorEvent sensorEvent) {
-        // Gets the value of the sensor that has been changed
+
         switch (sensorEvent.sensor.getType()) {
-            case Sensor.TYPE_ACCELEROMETER:
-                if (counter < waitCount) {
-                    counter++;
-                    Log.d("Msg", String.valueOf(counter));
-                    return;
-                }
-
-                gravity = sensorEvent.values.clone();
-                double diff = 0;
-                for (int i = 0; i < gravity.length - 1; i++) {
-                    diff += gravity[i];
-                }
-                diff = Math.sqrt(Math.abs(diff));
-                Log.d("diff", String.valueOf(diff));
-                if (diff > ACCELERATION_THRESHOLD) {
-
-                    // If gravity and geomag have values then find rotation matrix
-                    if (gravity != null && geomag != null && initialOrientation != null) {
-
-                        // checks that the rotation matrix is found
-                        boolean success = SensorManager.getRotationMatrix(inR, I, gravity, geomag);
-                        if (success) {
-                            SensorManager.getOrientation(inR, orientVals);
-                            azimuth = Math.toDegrees(orientVals[0]);
-                            pitch = Math.toDegrees(orientVals[1]);
-                            roll = Math.toDegrees(orientVals[2]);
-
-                            double deltaAzimuth = azimuth - initialOrientation[0];
-                            deltaAzimuth += (deltaAzimuth>180) ? -360 : (deltaAzimuth<-180) ? 360 : 0;
-                            double deltaPitch = pitch - initialOrientation[1];
-                            deltaPitch += (deltaPitch>180) ? -360 : (deltaPitch<-180) ? 360 : 0;
-                            //deltaPitch *= -1;
-                            double deltaRoll = roll - initialOrientation[2];
-                            deltaRoll += (deltaRoll>180) ? -360 : (deltaRoll<-180) ? 360 : 0;
-
-                            System.out.println(Arrays.toString(initialOrientation));
-                            System.out.println(azimuth + " " + pitch);
-                            System.out.println(deltaAzimuth + " " + deltaPitch);
-                            if (type == Type.LEFT) {
-                                //LEFT DRUM STICK
-                                leftDrumHit(deltaAzimuth, deltaPitch, deltaRoll);
-                            } else {
-                                //RIGHT DRUM STICK
-                                rightDrumHit(deltaAzimuth, deltaPitch, deltaRoll);
-                            }
-                            //System.out.println(azimuth + "      " + pitch + "       " + roll);
-                        }
-                    }
-                }
-                break;
             case Sensor.TYPE_MAGNETIC_FIELD:
-                geomag = sensorEvent.values.clone();
+                mags = sensorEvent.values.clone();
+                break;
+            case Sensor.TYPE_ACCELEROMETER:
+                accels = sensorEvent.values.clone();
                 break;
         }
-        // If gravity and geomag have values then find rotation matrix
-        if (counter == waitCount && initialOrientation == null && gravity != null && geomag != null) {
+        if (mags != null && accels != null) {
+            gravity = new float[9];
+            magnetic = new float[9];
+            SensorManager.getRotationMatrix(gravity, magnetic, accels, mags);
+            float[] outGravity = new float[9];
+            SensorManager.remapCoordinateSystem(gravity, SensorManager.AXIS_X,SensorManager.AXIS_Z, outGravity);
+            SensorManager.getOrientation(outGravity, values);
 
-            // checks that the rotation matrix is found
-            boolean success = SensorManager.getRotationMatrix(inR, I, gravity, geomag);
-            if (success) {
-                SensorManager.getOrientation(inR, orientVals);
+            azimuth = values[0] * 57.2957795f;
+            pitch =values[1] * 57.2957795f;
+            roll = values[2] * 57.2957795f;
 
-                initialOrientation = new double[]{Math.toDegrees(orientVals[0]), Math.toDegrees(orientVals[1]), Math.toDegrees(orientVals[2]) };
-            }
+            System.out.println(azimuth + " " + pitch + " " + roll);
         }
     }
 
@@ -185,7 +135,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             }
         }
         else if(pitch >= -22.5 && pitch < 5) {
-            if(azimuth >= -90 && azimuth <= -45){
+            if(azimuth >= -60 && azimuth <= -45){
                 System.out.println("Hi-Hat");
             }
             else if(azimuth > -45 && azimuth <= 0) {
@@ -214,7 +164,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             }
         }
         else if(pitch >= -22.5 && pitch < 5) {
-            if(azimuth >= -90 && azimuth <= 0){
+            if(azimuth >= -60 && azimuth <= 0){
                 System.out.println("Hi-Hat");
             }
             else if(azimuth > 0 && azimuth <= 60) {
@@ -265,5 +215,17 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private void playSnare() {
         MediaPlayer mp = MediaPlayer.create(MainActivity.this, R.raw.snare);
         mp.start();
+    }
+
+    public double getDelta(double finalVal, double initialVal) {
+        if (finalVal == initialVal){
+            return 0;
+        }
+        else if (finalVal > initialVal) {
+            return Math.min(initialVal + 360 - finalVal, finalVal - initialVal);
+        }
+        else {
+            return Math.min(finalVal + 360 - initialVal, finalVal - initialVal);
+        }
     }
 }
