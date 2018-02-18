@@ -41,6 +41,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     double pitch = 0;
     double roll = 0;
 
+    int counter;
+    private final int waitCount = 100;
+
     private Type type = Type.LEFT;
 
     @Override
@@ -73,9 +76,17 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             public void onClick(View view) {
                 mSensorManager.unregisterListener(MainActivity.this);
 
-                gravity = null;
-                geomag = null;
+
                 initialOrientation = null;
+                azimuth = 0;
+                pitch = 0;
+                roll = 0;
+                counter = 0;
+                inR = new float[16];
+                I = new float[16];
+                gravity = new float[3];
+                geomag = new float[3];
+                orientVals = new float[3];
                 mSensorManager.registerListener(MainActivity.this, mAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
                 mSensorManager.registerListener(MainActivity.this, mMagnetometer, SensorManager.SENSOR_DELAY_NORMAL);
             }
@@ -99,6 +110,10 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         // Gets the value of the sensor that has been changed
         switch (sensorEvent.sensor.getType()) {
             case Sensor.TYPE_ACCELEROMETER:
+                if (counter < waitCount) {
+                    counter++;
+                    return;
+                }
                 gravity = sensorEvent.values.clone();
                 double diff = 0;
                 for (int i = 0; i < gravity.length - 1; i++) {
@@ -146,7 +161,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 break;
         }
         // If gravity and geomag have values then find rotation matrix
-        if (initialOrientation == null && gravity != null && geomag != null) {
+        if (counter > waitCount && initialOrientation == null && gravity != null && geomag != null) {
 
             // checks that the rotation matrix is found
             boolean success = SensorManager.getRotationMatrix(inR, I, gravity, geomag);
