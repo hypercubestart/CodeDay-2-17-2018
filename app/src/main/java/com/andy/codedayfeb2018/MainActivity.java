@@ -14,6 +14,10 @@ import android.widget.ToggleButton;
 
 public class MainActivity extends AppCompatActivity implements SensorEventListener{
 
+    enum Type {
+        LEFT, RIGHT
+    }
+
     private final static double ACCELERATION_THRESHOLD = 0.5;
 
     private Button calibrationButton;
@@ -21,6 +25,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private SensorManager mSensorManager;
     private float[] prevAccelerations;
     private float[] prevRotations;
+
+    private Type type = Type.LEFT;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,6 +36,19 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
 
         calibrationButton = findViewById(R.id.calibration_button);
+        toggleButton = findViewById(R.id.toggleButton);
+
+        toggleButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (toggleButton.isChecked()) {
+                    type = Type.LEFT;
+                } else {
+                    type = Type.RIGHT;
+                }
+            }
+        });
+
         calibrationButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -70,6 +89,13 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
             if (diff > ACCELERATION_THRESHOLD) {
                 //REGISTER AS HIT
+                if (type == Type.LEFT) {
+                    //LEFT DRUM STICK
+                    leftDrumHit();
+                } else {
+                    //RIGHT DRUM STICK
+                    rightDrumHit();
+                }
             }
 
             prevAccelerations = values;
@@ -77,6 +103,14 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         } else if (sensorEvent.sensor.getType() == Sensor.TYPE_GAME_ROTATION_VECTOR) {
             prevRotations = sensorEvent.values;
         }
+    }
+
+    private void leftDrumHit() {
+        
+    }
+
+    private void rightDrumHit() {
+
     }
 
     @Override
