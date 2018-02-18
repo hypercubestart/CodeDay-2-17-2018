@@ -12,13 +12,15 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.ToggleButton;
 
+import java.util.Arrays;
+
 public class MainActivity extends AppCompatActivity implements SensorEventListener{
 
     enum Type {
         LEFT, RIGHT
     }
 
-    private final static double ACCELERATION_THRESHOLD = 0.5;
+    private final static double ACCELERATION_THRESHOLD = 2.5;
 
     private Button calibrationButton;
     private ToggleButton toggleButton;
@@ -43,8 +45,10 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             public void onClick(View view) {
                 if (toggleButton.isChecked()) {
                     type = Type.LEFT;
+                    System.out.println("left");
                 } else {
                     type = Type.RIGHT;
+                    System.out.println("Right");
                 }
             }
         });
@@ -83,12 +87,15 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
             float[] values = sensorEvent.values;
             double diff = 0;
-            for (int i = 0; i < values.length; i++) {
-                diff += Math.pow(values[i] - prevAccelerations[i], 2);
+            for (int i = 0; i < values.length - 1; i++) {
+                diff += values[i];
             }
-
+            diff = Math.sqrt(Math.abs(diff));
+            System.out.println(Arrays.toString(prevRotations));
+            //System.out.println(diff);
             if (diff > ACCELERATION_THRESHOLD) {
                 //REGISTER AS HIT
+                //System.out.println(Arrays.toString(prevRotations));
                 if (type == Type.LEFT) {
                     //LEFT DRUM STICK
                     leftDrumHit();
@@ -102,15 +109,64 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
         } else if (sensorEvent.sensor.getType() == Sensor.TYPE_GAME_ROTATION_VECTOR) {
             prevRotations = sensorEvent.values;
+            //System.out.println(Arrays.toString(prevRotations));
+        }
+    }
+
+    private void rightDrumHit() {
+        if(prevRotations[0] >= 0.125 && prevRotations[0] < 0.333) {
+            if(prevRotations[2] <= 0.5 && prevRotations[2] > 1/6){
+                System.out.println("Crash Cymbal");
+            }
+            else if(prevRotations[2] <= 1/6 && prevRotations[2] >= 0) {
+                System.out.println("High-Tom");
+            }
+            else if(prevRotations[2] < 0 && prevRotations[2] > -1/3) {
+                System.out.println("Ride Cymbal");
+            }
+        }
+        else if(prevRotations[0] >= -0.125 && prevRotations[0] < 0.125) {
+            if(prevRotations[2] <= 0.5 && prevRotations[2] >= 0.25){
+                System.out.println("Hi-Hat");
+            }
+            else if(prevRotations[2] < 0.25 && prevRotations[2] >= 0) {
+                System.out.println("Snare");
+            }
+            else if(prevRotations[2] < 0 && prevRotations[2] > -0.5) {
+                System.out.println("Low-Tom");
+            }
+        }
+        else {
+            System.out.println("Missed the drumset");
         }
     }
 
     private void leftDrumHit() {
-        
-    }
-
-    private void rightDrumHit() {
-
+        if(prevRotations[0] >= 0.125 && prevRotations[0] < 0.333) {
+            if(prevRotations[2] <= 1/3 && prevRotations[2] > 1/8){
+                System.out.println("Crash Cymbal");
+            }
+            else if(prevRotations[2] <= 1/8 && prevRotations[2] >= -0.25) {
+                System.out.println("High-Tom");
+            }
+            else if(prevRotations[2] < -0.25 && prevRotations[2] > -0.5) {
+                System.out.println("Ride Cymbal");
+            }
+        }
+        else if(prevRotations[0] >= -0.125 && prevRotations[0] < 0.125) {
+            if(prevRotations[2] <= 0.5 && prevRotations[2] >= 0){
+                System.out.println("Hi-Hat");
+            }
+            else if(prevRotations[2] < 0 && prevRotations[2] >= -1/3) {
+                System.out.println("Snare");
+            }
+            else if(prevRotations[2] < -1/3 && prevRotations[2] > -2/3) {
+                System.out.println("Low-Tom");
+            }
+        }
+        else {
+            System.out.println("Missed the drumset");
+        }
     }
 
     @Override
