@@ -8,6 +8,7 @@ import android.hardware.SensorManager;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ToggleButton;
@@ -24,10 +25,20 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     private Button calibrationButton;
     private ToggleButton toggleButton;
+
     private SensorManager mSensorManager;
-    private float[] prevAccelerations;
-    private float[] prevRotations;
-    private float[] initalRotations;
+    private Sensor mAccelerometer;
+    private Sensor mMagnetometer;
+
+    float[] inR = new float[16];
+    float[] I = new float[16];
+    float[] gravity = new float[3];
+    float[] geomag = new float[3];
+    float[] orientVals = new float[3];
+
+    double azimuth = 0;
+    double pitch = 0;
+    double roll = 0;
 
     private Type type = Type.LEFT;
 
@@ -36,7 +47,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+        mSensorManager = (SensorManager)getSystemService(SENSOR_SERVICE);
+        mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        mMagnetometer = mSensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
 
         calibrationButton = findViewById(R.id.calibration_button);
         toggleButton = findViewById(R.id.toggleButton);
@@ -59,13 +72,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             public void onClick(View view) {
                 mSensorManager.unregisterListener(MainActivity.this);
 
-                mSensorManager.registerListener(MainActivity.this,
-                        mSensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION),
-                        SensorManager.SENSOR_DELAY_NORMAL);
-
-                mSensorManager.registerListener(MainActivity.this,
-                        mSensorManager.getDefaultSensor(Sensor.TYPE_GAME_ROTATION_VECTOR),
-                        SensorManager.SENSOR_DELAY_NORMAL);
+                mSensorManager.registerListener(MainActivity.this, mAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
+                mSensorManager.registerListener(MainActivity.this, mMagnetometer, SensorManager.SENSOR_DELAY_NORMAL);
             }
         });
 
@@ -78,49 +86,52 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     @Override
     public void onSensorChanged(SensorEvent sensorEvent) {
-        if (sensorEvent.sensor.getType() == Sensor.TYPE_LINEAR_ACCELERATION) {
-            if (prevAccelerations == null) {
-                prevAccelerations = sensorEvent.values;
-                return;
-            }
+        // If the sensor data is unreliable return
+        if (sensorEvent.accuracy == SensorManager.SENSOR_STATUS_UNRELIABLE) {
+            Log.d("Sensor", "NOT ACCURATE");
+            return;
+        }
 
-            if (prevRotations == null) return;
-
-            float[] values = sensorEvent.values;
-            double diff = 0;
-            for (int i = 0; i < values.length - 1; i++) {
-                diff += values[i];
-            }
-            diff = Math.sqrt(Math.abs(diff));
-            System.out.println(Arrays.toString(prevRotations));
-            //System.out.println(diff);
-            float[] rotValues = new float[3];
-            for (int i = 0; i < rotValues.length; i++) {
-                rotValues[i] = prevRotations[i] - initalRotations[i];
-            }
-
-            if (diff > ACCELERATION_THRESHOLD) {
-                //REGISTER AS HIT
-                //System.out.println(Arrays.toString(prevRotations));
-                if (type == Type.LEFT) {
-                    //LEFT DRUM STICK
-                    leftDrumHit(rotValues);
-                } else {
-                    //RIGHT DRUM STICK
-                    rightDrumHit(rotValues);
+        // Gets the value of the sensor that has been changed
+        switch (sensorEvent.sensor.getType()) {
+            case Sensor.TYPE_ACCELEROMETER:
+                gravity = sensorEvent.values.clone();
+                double diff = 0;
+                for (int i = 0; i < gravity.length - 1; i++) {
+                    diff += gravity[i];
                 }
-            }
+                diff = Math.sqrt(Math.abs(diff));
+                if (diff > ACCELERATION_THRESHOLD) {
+                    // If gravity and geomag have values then find rotation matrix
+                    if (gravity != null && geomag != null) {
 
-            prevAccelerations = values;
-
-        } else if (sensorEvent.sensor.getType() == Sensor.TYPE_GAME_ROTATION_VECTOR) {
-            if (initalRotations == null) initalRotations = sensorEvent.values.clone();
-            prevRotations = sensorEvent.values;
-            //System.out.println(Arrays.toString(prevRotations));
+                        // checks that the rotation matrix is found
+                        boolean success = SensorManager.getRotationMatrix(inR, I, gravity, geomag);
+                        if (success) {
+                            SensorManager.getOrientation(inR, orientVals);
+                            azimuth = Math.toDegrees(orientVals[0]);
+                            pitch = Math.toDegrees(orientVals[1]);
+                            roll = Math.toDegrees(orientVals[2]);
+                            //System.out.println(azimuth + "      " + pitch + "       " + roll);
+                        }
+                    }
+                    //REGISTER AS HIT
+                    if (type == Type.LEFT) {
+                        //LEFT DRUM STICK
+                        leftDrumHit(azimuth, pitch, roll);
+                    } else {
+                        //RIGHT DRUM STICK
+                        rightDrumHit(azimuth, pitch, roll);
+                    }
+                }
+                break;
+            case Sensor.TYPE_MAGNETIC_FIELD:
+                geomag = sensorEvent.values.clone();
+                break;
         }
     }
 
-    private void rightDrumHit(float[] vals) {
+    private void rightDrumHit(double azimuth, double pitch, double roll) {
         if(vals[0] >= 0.125 && vals[0] < 0.333) {
             if(vals[2] <= 0.5 && vals[2] > 1/6){
                 System.out.println("Crash Cymbal");
@@ -148,7 +159,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         }
     }
 
-    private void leftDrumHit(float[] vals) {
+    private void leftDrumHit(double azimuth, double pitch, double roll) {
         if(vals[0] >= 0.125 && vals[0] < 0.333) {
             if(vals[2] <= 1/3 && vals[2] > 1/8){
                 System.out.println("Crash Cymbal");
