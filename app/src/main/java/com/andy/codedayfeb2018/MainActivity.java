@@ -112,8 +112,25 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             case Sensor.TYPE_ACCELEROMETER:
                 if (counter < waitCount) {
                     counter++;
+                    Log.d("Msg", String.valueOf(counter));
                     return;
                 }
+
+                if (counter > waitCount && initialOrientation == null && gravity != null && geomag != null) {
+
+                    // checks that the rotation matrix is found
+                    boolean success = SensorManager.getRotationMatrix(inR, I, gravity, geomag);
+                    if (success) {
+                        SensorManager.getOrientation(inR, orientVals);
+                        azimuth = Math.toDegrees(orientVals[0]);
+                        pitch = Math.toDegrees(orientVals[1]);
+                        roll = Math.toDegrees(orientVals[2]);
+
+                        initialOrientation = new double[]{Math.toDegrees(orientVals[0]), Math.toDegrees(orientVals[1]), Math.toDegrees(orientVals[2]) };
+                        System.out.println(azimuth + "      " + pitch + "       " + roll);
+                    }
+                }
+
                 gravity = sensorEvent.values.clone();
                 double diff = 0;
                 for (int i = 0; i < gravity.length - 1; i++) {
