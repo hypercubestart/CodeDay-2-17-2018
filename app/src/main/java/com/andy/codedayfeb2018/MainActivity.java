@@ -5,6 +5,7 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.media.MediaPlayer;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -264,7 +265,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     }
 
     private void playCrashCymbal() {
-
+        MediaPlayer mp = MediaPlayer.create(MainActivity.this, R.raw.cymbal);
+        mp.start();
     }
 
     private void playHighTom() {
@@ -285,6 +287,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     }
 
     private void playSnare() {
-
+        MediaPlayer mp = MediaPlayer.create(MainActivity.this, R.raw.snare);
+        mp.start();
     }
 }
