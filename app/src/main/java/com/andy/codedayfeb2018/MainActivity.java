@@ -135,7 +135,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 break;
         }
         // If gravity and geomag have values then find rotation matrix
-        if (/*initialOrientation == null && */gravity != null && geomag != null) {
+        if (initialOrientation == null && gravity != null && geomag != null) {
 
             // checks that the rotation matrix is found
             boolean success = SensorManager.getRotationMatrix(inR, I, gravity, geomag);
@@ -145,66 +145,66 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 pitch = Math.toDegrees(orientVals[1]);
                 roll = Math.toDegrees(orientVals[2]);
 
-                //initialOrientation = new double[]{Math.toDegrees(orientVals[0]), Math.toDegrees(orientVals[1]), Math.toDegrees(orientVals[2]) };
+                initialOrientation = new double[]{Math.toDegrees(orientVals[0]), Math.toDegrees(orientVals[1]), Math.toDegrees(orientVals[2]) };
                 System.out.println(azimuth + "      " + pitch + "       " + roll);
             }
         }
     }
 
     private void rightDrumHit(double azimuth, double pitch, double roll) {
-       /* if(vals[0] >= 0.125 && vals[0] < 0.333) {
-            if(vals[2] <= 0.5 && vals[2] > 1/6){
+        if(pitch >= 22.5 && pitch < 60) {
+            if(azimuth >= -90 && azimuth < -30){
                 System.out.println("Crash Cymbal");
             }
-            else if(vals[2] <= 1/6 && vals[2] >= 0) {
+            else if(azimuth >= -30 && azimuth <= 0) {
                 System.out.println("High-Tom");
             }
-            else if(vals[2] < 0 && vals[2] > -1/3) {
+            else if(azimuth > 0 && azimuth < 60) {
                 System.out.println("Ride Cymbal");
             }
         }
-        else if(vals[0] >= -0.125 && vals[0] < 0.125) {
-            if(vals[2] <= 0.5 && vals[2] >= 0.25){
+        else if(pitch >= -22.5 && pitch < 22.5) {
+            if(azimuth >= -90 && azimuth <= -45){
                 System.out.println("Hi-Hat");
             }
-            else if(vals[2] < 0.25 && vals[2] >= 0) {
+            else if(azimuth > -45 && azimuth <= 0) {
                 System.out.println("Snare");
             }
-            else if(vals[2] < 0 && vals[2] > -0.5) {
+            else if(azimuth > 0 && azimuth < 90) {
                 System.out.println("Low-Tom");
             }
         }
         else {
             System.out.println("Missed the drumset");
-        }*/
+        }
     }
 
     private void leftDrumHit(double azimuth, double pitch, double roll) {
-      /*  if(vals[0] >= 0.125 && vals[0] < 0.333) {
-            if(vals[2] <= 1/3 && vals[2] > 1/8){
+        if(pitch >= 11.25 && pitch < 60) {
+            if(azimuth >= -60 && azimuth < 0){
                 System.out.println("Crash Cymbal");
             }
-            else if(vals[2] <= 1/8 && vals[2] >= -0.25) {
+            else if(azimuth >= 0 && azimuth <= 22.5) {
                 System.out.println("High-Tom");
             }
-            else if(vals[2] < -0.25 && vals[2] > -0.5) {
+            else if(azimuth > 22.5 && azimuth < 45) {
                 System.out.println("Ride Cymbal");
             }
         }
-        else if(vals[0] >= -0.125 && vals[0] < 0.125) {
-            if(vals[2] <= 0.5 && vals[2] >= 0){
+        else if(pitch >= -11.25 && pitch < 11.25) {
+            if(azimuth >= -90 && azimuth <= 0){
                 System.out.println("Hi-Hat");
             }
-            else if(vals[2] < 0 && vals[2] >= -1/3) {
+            else if(azimuth > 0 && azimuth <= 60) {
                 System.out.println("Snare");
             }
-            else if(vals[2] < -1/3 && vals[2] > -2/3) {
+            else if(azimuth > 60 && azimuth < 120) {
                 System.out.println("Low-Tom");
             }
         }
         else {
             System.out.println("Missed the drumset");
-        }*/
+        }
     }
 
     @Override
